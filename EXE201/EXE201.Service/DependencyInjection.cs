@@ -1,4 +1,6 @@
 ﻿
+using EXE201.Service.Interface;
+using EXE201.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -8,8 +10,7 @@ namespace EXE201.Service
     {
         public static IServiceCollection AddServices(this IServiceCollection service)
         {
-            
-            //service.AddTransient<IRoomService, RoomService>();
+            service.AddTransient<IAuthService, AuthService>();
             return service;
         }
     }
