@@ -45,5 +45,5 @@ jobs:
       - name: Azure WebApp
         uses: Azure/webapps-deploy@v3.0.1
         with:
-          app-name: 'swd-api-dev'
+          app-name: 'exe-api-dev'
           publish-profile: ${{ secrets.PUBLISH_PROFILE_DEV }}
