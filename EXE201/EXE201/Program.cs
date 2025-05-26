@@ -2,6 +2,7 @@ using EXE201.Data;
 using EXE201.Data.Entities;
 using EXE201.Repository;
 using EXE201.Service;
+using EXE201.Service.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
+using VNPAY.NET;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +78,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<FurnitureStoreDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<IVnpay, Vnpay>();
+builder.Services.AddScoped<VnpayService>();
+
 
 
 var app = builder.Build();
