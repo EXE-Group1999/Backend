@@ -11,6 +11,7 @@ namespace EXE201.Service
         public static IServiceCollection AddServices(this IServiceCollection service)
         {
             service.AddTransient<IAuthService, AuthService>();
+            service.AddTransient<IFurnitureService, FurnitureService>();
             return service;
         }
     }
