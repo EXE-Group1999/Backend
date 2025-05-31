@@ -63,6 +63,10 @@ namespace EXE201.Service.Services
                     f.Name.Contains(parameters.Search) ||
                     f.Description.Contains(parameters.Search));
             }
+            if(parameters.CategoryId.HasValue)
+            {
+                filtered = filtered.Where(f => f.CategoryId == parameters.CategoryId.Value);
+            }
 
             var total = filtered.Count();
             var paged = filtered
