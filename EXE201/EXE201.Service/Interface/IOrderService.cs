@@ -6,9 +6,9 @@ namespace EXE201.Service.Interface
 {
     public interface IOrderService
     {
-        Task<PaginatedResult<Order>> GetAllAsync(OrderQueryParameters parameters);
-        Task<Order> GetByIdAsync(int id);
-        Task<Order> CreateAsync(Order order);
+        Task<OrderDto> CreateAsync(OrderDto dto);
+        Task<PaginatedResult<OrderDto>> GetAllAsync(OrderQueryParameters parameters);
+        Task<OrderDto> GetByIdAsync(int id);
         Task UpdateStatusAsync(int id, string status);
     }
 }

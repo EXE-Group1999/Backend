@@ -12,6 +12,11 @@ namespace EXE201.Service
         {
             service.AddTransient<IAuthService, AuthService>();
             service.AddTransient<IFurnitureService, FurnitureService>();
+            service.AddTransient<IAdminService, AdminService>();
+            service.AddTransient<ICategoryService, CategoryService>();
+            service.AddTransient<IOrderService, OrderService>();
+            service.AddTransient<IReviewService, ReviewService>();
+            service.AddTransient<IUserService, UserService>();
             return service;
         }
     }
