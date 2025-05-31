@@ -57,17 +57,19 @@ namespace EXE201.Service.Services
                 OrderId = order.Id,
                 Address = dto.ShippingDetail.Address,
                 PhoneNumber = dto.ShippingDetail.PhoneNumber,
-                FullName = dto.ShippingDetail.FullName
+                FullName = dto.ShippingDetail.FullName,
+                City = dto.ShippingDetail.City,
+                PostalCode = dto.ShippingDetail.PostalCode,
             };
             await _shippingDetailRepo.AddAsync(shipping);
 
-            var payment = new Payment
-            {
-                OrderId = order.Id,
-                PaymentMethod = dto.Payment.PaymentMethod,
-                PaymentDate = DateTime.Now
-            };
-            await _paymentRepo.AddAsync(payment);
+            //var payment = new Payment
+            //{
+            //    OrderId = order.Id,
+            //    PaymentMethod = dto.Payment.PaymentMethod,
+            //    PaymentDate = DateTime.Now
+            //};
+            //await _paymentRepo.AddAsync(payment);
 
             return await GetByIdAsync(order.Id); // Return full dto
         }
@@ -78,7 +80,8 @@ namespace EXE201.Service.Services
                 filter: o =>
                     (parameters.Status == null || o.Status == parameters.Status) &&
                     (parameters.UserId == null || o.UserId == parameters.UserId),
-                includeProperties: "OrderItems,Furniture,ShippingDetail,Payment");
+                includeProperties: "OrderItems.Furniture,ShippingDetail,Payment");
+
 
             var totalCount = orders.Count();
             var pagedOrders = orders
@@ -99,8 +102,56 @@ namespace EXE201.Service.Services
 
         public async Task<OrderDto> GetByIdAsync(int id)
         {
-            var order = await _orderRepo.GetAsync(o => o.Id == id, "OrderItems,Furniture,ShippingDetail,Payment");
-            return MapToDto(order);
+            var order = await _orderRepo.GetAsync(
+                o => o.Id == id,
+                includeProperties: "User,OrderItems.Furniture,ShippingDetail,Payment"
+            );
+
+            if (order == null)
+                return null;
+
+            var orderDto = new OrderDto
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                OrderDate = order.OrderDate,
+                Status = order.Status,
+                TotalAmount = order.TotalAmount,
+                ShippingDetail = new ShippingDetailDto
+                {
+                    Address = order.ShippingDetail?.Address,
+                    PhoneNumber = order.ShippingDetail?.PhoneNumber,
+                    FullName = order.ShippingDetail?.FullName,
+                    City = order.ShippingDetail?.City,
+                    PostalCode = order.ShippingDetail?.PostalCode
+                },
+                Payment = order.Payment == null ? null : new PaymentDto
+                {
+                    PaymentMethod = order.Payment.PaymentMethod,
+                    PaymentDate = order.Payment.PaymentDate
+                },
+                OrderItems = order.OrderItems?.Select(item => new OrderItemDto
+                {
+                    FurnitureId = item.FurnitureId,
+                    Quantity = item.Quantity,
+                    CustomHeight = item.CustomHeight,
+                    CustomWidth = item.CustomWidth,
+                    CustomLength = item.CustomLength,
+                    UnitPrice = item.UnitPrice,
+                    SubTotal = item.Quantity * item.UnitPrice
+                     
+                }).ToList()
+            };
+
+            return orderDto;
+        }
+        public async Task<List<OrderDto>> GetOrdersByUserIdAsync(int userId)
+        {
+            var orders = await _orderRepo.GetAllAsync(
+                filter: o => o.UserId == userId,
+                includeProperties: "OrderItems.Furniture,ShippingDetail,Payment");
+
+            return orders.Select(MapToDto).ToList();
         }
 
         public async Task UpdateStatusAsync(int id, string status)

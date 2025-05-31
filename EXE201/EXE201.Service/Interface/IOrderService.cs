@@ -9,6 +9,7 @@ namespace EXE201.Service.Interface
         Task<OrderDto> CreateAsync(OrderDto dto);
         Task<PaginatedResult<OrderDto>> GetAllAsync(OrderQueryParameters parameters);
         Task<OrderDto> GetByIdAsync(int id);
+        Task<List<OrderDto>> GetOrdersByUserIdAsync(int userId);
         Task UpdateStatusAsync(int id, string status);
     }
 }
