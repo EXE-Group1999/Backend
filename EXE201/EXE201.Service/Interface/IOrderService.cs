@@ -1,5 +1,4 @@
-﻿using EXE201.Data.Entities;
-using EXE201.Data.DTOs;
+﻿using EXE201.Data.DTOs;
 
 
 namespace EXE201.Service.Interface

@@ -1,34 +1,32 @@
 ﻿using EXE201.Data.DTOs;
-using EXE201.Repository.Interfaces;
 using EXE201.Service.Interface;
-
-
+using EXE201.Data.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace EXE201.Service.Services
 {
     public class UserService : IUserService
     {
-        private readonly IApplicationUserRepository _userRepo;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public UserService(IApplicationUserRepository userRepo)
+        public UserService(UserManager<ApplicationUser> userManager)
         {
-            _userRepo = userRepo;
+            _userManager = userManager;
         }
 
         public async Task DeleteAsync(int id)
         {
-            var user = await _userRepo.GetAsync(u => u.Id == id);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user != null)
             {
-                await _userRepo.DeleteAsync(user);
+                await _userManager.DeleteAsync(user);
             }
-            // else optionally handle not found
         }
 
         public async Task<PaginatedResult<ApplicationUserDto>> GetAllAsync(UserQueryParameters parameters)
         {
-            var query = (await _userRepo.GetAllAsync())
-                .AsQueryable();
+            var query = _userManager.Users.AsQueryable();
 
             if (!string.IsNullOrEmpty(parameters.Search))
             {
@@ -37,18 +35,20 @@ namespace EXE201.Service.Services
                     u.Email.Contains(parameters.Search, StringComparison.OrdinalIgnoreCase));
             }
 
-            var totalCount = query.Count();
+            var totalCount = await query.CountAsync();
 
-            var pagedUsers = query
+            var pagedUsers = await query
                 .Skip((parameters.PageIndex - 1) * parameters.PageSize)
                 .Take(parameters.PageSize)
-            .ToList();
+                .ToListAsync();
 
             var userDtos = pagedUsers.Select(u => new ApplicationUserDto
             {
                 Id = u.Id,
                 FullName = u.FullName,
-                Email = u.Email
+                Email = u.Email,
+                DateCreated = u.DateCreated,
+
             }).ToList();
 
             return new PaginatedResult<ApplicationUserDto>
@@ -62,23 +62,24 @@ namespace EXE201.Service.Services
 
         public async Task<ApplicationUserDto> GetByIdAsync(int id)
         {
-            var user = await _userRepo.GetAsync(u => u.Id == id);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
             {
-                return null; // Or throw exception based on your error strategy
+                return null;
             }
 
             return new ApplicationUserDto
             {
                 Id = user.Id,
                 FullName = user.FullName,
-                Email = user.Email
+                Email = user.Email,
+                DateCreated = user.DateCreated,
             };
         }
 
         public async Task UpdateAsync(ApplicationUserDto userDto)
         {
-            var user = await _userRepo.GetAsync(u => u.Id == userDto.Id);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userDto.Id);
             if (user == null)
             {
                 throw new Exception("User not found");
@@ -86,11 +87,13 @@ namespace EXE201.Service.Services
 
             user.FullName = userDto.FullName;
             user.Email = userDto.Email;
-            
 
-            // update other properties as needed
 
-            await _userRepo.UpdateAsync(user);
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new Exception("Failed to update user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
         }
     }
 }
