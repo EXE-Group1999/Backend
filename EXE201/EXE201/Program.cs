@@ -1,14 +1,18 @@
+using System.Reflection;
+using System.Text;
 using EXE201.Data;
 using EXE201.Data.Entities;
 using EXE201.Repository;
 using EXE201.Service;
+using EXE201.Service.Configurations;
+using EXE201.Service.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
-using System.Text;
+using Net.payOS;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +80,17 @@ builder.Services.AddAuthorization();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<FurnitureStoreDbContext>()
     .AddDefaultTokenProviders();
+
+
+builder.Services.Configure<PayOSOptions>(
+    builder.Configuration.GetSection("PayOS"));
+
+builder.Services.AddScoped<PayOS>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<PayOSOptions>>().Value;
+    return new PayOS(options.ClientId, options.ApiKey, options.ChecksumKey);
+});
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 
 var app = builder.Build();

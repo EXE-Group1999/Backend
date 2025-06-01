@@ -3,6 +3,7 @@
 using EXE201.Data;
 using EXE201.Data.Entities;
 using EXE201.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace EXE201.Repository.Repositories
 {
@@ -12,6 +13,12 @@ namespace EXE201.Repository.Repositories
         public OrderRepository(FurnitureStoreDbContext context) : base(context)
         {
             _dbcontext = context;
+        }
+        public async Task<Order> GetOrderWithItemsAsync(long orderId)
+        {
+            return await _dbcontext.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
         }
     }
 }
