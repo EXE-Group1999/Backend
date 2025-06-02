@@ -20,5 +20,17 @@ namespace EXE201.Repository.Repositories
                 .Include(o => o.OrderItems)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
+        public async Task<List<Order>> GetOrdersByUserIdAsync(int userId)
+        {
+            return await _dbcontext.Orders
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+        }
+
+        public async Task<Order> GetByIdAsync(int orderId)
+        {
+            return await _dbcontext.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        }
     }
 }

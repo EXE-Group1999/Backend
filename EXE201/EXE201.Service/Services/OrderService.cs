@@ -31,7 +31,7 @@ namespace EXE201.Service.Services
             {
                 UserId = dto.UserId,
                 OrderDate = DateTime.UtcNow,
-                Status = dto.Status,
+                Status = "Pending",
                 TotalAmount = dto.TotalAmount
             };
 

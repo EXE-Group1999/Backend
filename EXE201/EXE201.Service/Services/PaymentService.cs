@@ -13,7 +13,7 @@ namespace EXE201.Service.Services
 {
     public interface IPaymentService
     {
-        Task<string> CreatePaymentLinkAsync(long orderId);
+        Task<string> CreatePaymentLinkAsync(int orderId);
     }
 
     public class PaymentService : IPaymentService
@@ -27,7 +27,7 @@ namespace EXE201.Service.Services
             _orderRepository = orderRepository;
         }
 
-        public async Task<string> CreatePaymentLinkAsync(long orderId)
+        public async Task<string> CreatePaymentLinkAsync(int orderId)
         {
             var order = await _orderRepository.GetOrderWithItemsAsync(orderId);
 
