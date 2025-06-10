@@ -17,6 +17,7 @@ namespace EXE201.Service
             service.AddTransient<IOrderService, OrderService>();
             service.AddTransient<IReviewService, ReviewService>();
             service.AddTransient<IUserService, UserService>();
+            service.AddScoped<ChatBotService>();
             return service;
         }
     }
