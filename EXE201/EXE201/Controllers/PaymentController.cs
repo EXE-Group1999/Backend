@@ -1,5 +1,6 @@
 ﻿using EXE201.Data;
 using EXE201.Data.DTOs;
+using EXE201.Data.Entities;
 using EXE201.Repository.Interfaces;
 using EXE201.Service.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -39,22 +40,33 @@ namespace EXE201.Controllers
 
 
         [HttpPost("callback")]
-        public async Task<IActionResult> HandlePaymentCallback([FromBody] PaymentCallbackDto callback)
+        public async Task<IActionResult> HandlePaymentCallback([FromBody] PayOSWebhookPayload payload)
         {
-            // Xử lý logic callback ở đây
-            var order = await _orderRepository.GetOrderWithItemsAsync(callback.orderCode);
+            var data = payload.data;
 
+            var order = await _orderRepository.GetOrderWithItemsAsync(data.orderCode);
             if (order == null)
                 return NotFound();
 
-            if (callback.status == "PAID")
+            if (data.status == "PAID")
             {
                 order.Status = "Confirmed";
                 await _orderRepository.UpdateAsync(order);
-                return Ok(new { message = "Payment confirmed." });
+
+                var payment = new Payment
+                {
+                    OrderId = order.Id,
+                    AmountPaid = data.amount,
+                    PaymentDate = data.paidAt ?? DateTime.UtcNow,
+                    PaymentMethod = data.paymentMethod
+                };
+                await _context.Payments.AddAsync(payment);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true });
             }
 
-            return BadRequest(new { message = "Invalid payment status." });
+            return BadRequest(new { message = "Invalid status" });
         }
 
         [HttpGet("success")]
