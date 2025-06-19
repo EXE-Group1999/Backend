@@ -19,18 +19,30 @@ namespace EXE201.Controllers
         /// Create a new order.
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<OrderDto>> Create([FromBody] OrderDto dto)
+        public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var createdOrder = await _orderService.CreateAsync(dto);
+            try
+            {
+                var (createdOrder, checkoutUrl) = await _orderService.CreateAsync(dto);
 
-            if (createdOrder == null)
-                return StatusCode(500, "An error occurred while creating the order.");
+                if (createdOrder == null || string.IsNullOrEmpty(checkoutUrl))
+                    return StatusCode(500, "An error occurred while creating the order.");
 
-            return CreatedAtAction(nameof(GetById), new { id = createdOrder.Id }, createdOrder);
+                return CreatedAtAction(nameof(GetById), new { id = createdOrder.Id }, new
+                {
+                    order = createdOrder,
+                    paymentUrl = checkoutUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
+
 
 
         /// <summary>

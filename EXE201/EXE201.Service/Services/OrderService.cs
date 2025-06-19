@@ -12,44 +12,114 @@ namespace EXE201.Service.Services
         private readonly IOrderItemRepository _orderItemRepo;
         private readonly IShippingDetailRepository _shippingDetailRepo;
         private readonly IRepository<Payment> _paymentRepo;
+        private readonly IFurnitureRepository _furnitureRepo;
+        private readonly IPaymentService _paymentService;
 
         public OrderService(
             IOrderRepository orderRepo,
             IOrderItemRepository orderItemRepo,
             IShippingDetailRepository shippingDetailRepo,
-            IRepository<Payment> paymentRepo)
+            IRepository<Payment> paymentRepo,
+            IFurnitureRepository furnitureRepo,
+            IPaymentService paymentService)
         {
             _orderRepo = orderRepo;
             _orderItemRepo = orderItemRepo;
             _shippingDetailRepo = shippingDetailRepo;
             _paymentRepo = paymentRepo;
+            _furnitureRepo = furnitureRepo;
+            _paymentService = paymentService;
         }
 
-        public async Task<OrderDto> CreateAsync(OrderDto dto)
+        /*        public async Task<(OrderDto, string)> CreateAsync(CreateOrderDto dto)
+                {
+                    var order = new Order
+                    {
+                        UserId = dto.UserId,
+                        OrderDate = DateTime.UtcNow,
+                        Status = "Pending"
+                        //,TotalAmount = dto.TotalAmount
+                    };
+
+                    await _orderRepo.AddAsync(order);
+
+                    foreach (var item in dto.OrderItems)
+                    {
+                        var orderItem = new OrderItem
+                        {
+                            OrderId = order.Id,
+                            FurnitureId = item.FurnitureId,
+                            Quantity = item.Quantity,
+                            CustomHeight = item.CustomHeight,
+                            CustomWidth = item.CustomWidth,
+                            CustomLength = item.CustomLength,
+                            UnitPrice = item.UnitPrice
+                        };
+                        await _orderItemRepo.AddAsync(orderItem);
+                    }
+
+                    var shipping = new ShippingDetail
+                    {
+                        OrderId = order.Id,
+                        Address = dto.ShippingDetail.Address,
+                        PhoneNumber = dto.ShippingDetail.PhoneNumber,
+                        FullName = dto.ShippingDetail.FullName,
+                        City = dto.ShippingDetail.City,
+                        PostalCode = dto.ShippingDetail.PostalCode,
+                    };
+                    await _shippingDetailRepo.AddAsync(shipping);
+
+                    //var payment = new Payment
+                    //{
+                    //    OrderId = order.Id,
+                    //    PaymentMethod = dto.Payment.PaymentMethod,
+                    //    PaymentDate = DateTime.Now
+                    //};
+                    //await _paymentRepo.AddAsync(payment);
+                    var checkoutUrl = await _paymentService.CreatePaymentLinkAsync(order.Id);
+
+                    var resultDto = await GetByIdAsync(order.Id); // Return full dto
+                    return (resultDto, checkoutUrl);
+                }*/
+        public async Task<(OrderDto, string)> CreateAsync(CreateOrderDto dto)
         {
+            decimal totalAmount = 0;
+            var orderItems = new List<OrderItem>();
+
+            foreach (var item in dto.OrderItems)
+            {
+                var furniture = await _furnitureRepo.GetByIdAsync(item.FurnitureId);
+                if (furniture == null)
+                    throw new Exception($"Furniture with ID {item.FurnitureId} not found.");
+
+                var unitPrice = furniture.BasePrice;
+                totalAmount += unitPrice * item.Quantity;
+
+                orderItems.Add(new OrderItem
+                {
+                    FurnitureId = item.FurnitureId,
+                    Quantity = item.Quantity,
+                    UnitPrice = unitPrice,
+                    CustomHeight = item.CustomHeight,
+                    CustomWidth = item.CustomWidth,
+                    CustomLength = item.CustomLength
+                });
+            }
+
             var order = new Order
             {
                 UserId = dto.UserId,
                 OrderDate = DateTime.UtcNow,
                 Status = "Pending",
-                TotalAmount = dto.TotalAmount
+                TotalAmount = totalAmount
             };
 
             await _orderRepo.AddAsync(order);
 
-            foreach (var item in dto.OrderItems)
+            foreach (var item in orderItems)
             {
-                var orderItem = new OrderItem
-                {
-                    OrderId = order.Id,
-                    FurnitureId = item.FurnitureId,
-                    Quantity = item.Quantity,
-                    CustomHeight = item.CustomHeight,
-                    CustomWidth = item.CustomWidth,
-                    CustomLength = item.CustomLength,
-                    UnitPrice = item.UnitPrice
-                };
-                await _orderItemRepo.AddAsync(orderItem);
+                item.OrderId = order.Id;
+                await _orderItemRepo.AddAsync(item);
             }
 
             var shipping = new ShippingDetail
@@ -59,19 +129,14 @@ namespace EXE201.Service.Services
                 PhoneNumber = dto.ShippingDetail.PhoneNumber,
                 FullName = dto.ShippingDetail.FullName,
                 City = dto.ShippingDetail.City,
-                PostalCode = dto.ShippingDetail.PostalCode,
+                PostalCode = dto.ShippingDetail.PostalCode
             };
             await _shippingDetailRepo.AddAsync(shipping);
 
-            //var payment = new Payment
-            //{
-            //    OrderId = order.Id,
-            //    PaymentMethod = dto.Payment.PaymentMethod,
-            //    PaymentDate = DateTime.Now
-            //};
-            //await _paymentRepo.AddAsync(payment);
+            var checkoutUrl = await _paymentService.CreatePaymentLinkAsync(order.Id);
+            var resultDto = await _orderRepo.GetOrderDtoByIdAsync(order.Id); 
 
-            return await GetByIdAsync(order.Id); // Return full dto
+            return (resultDto, checkoutUrl);
         }
 
         public async Task<PaginatedResult<OrderDto>> GetAllAsync(OrderQueryParameters parameters)

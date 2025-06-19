@@ -1,5 +1,6 @@
 ﻿
 
+using EXE201.Data.DTOs;
 using EXE201.Data.Entities;
 
 namespace EXE201.Repository.Interfaces
@@ -9,5 +10,7 @@ namespace EXE201.Repository.Interfaces
         Task<Order> GetOrderWithItemsAsync(long orderId);
         Task<List<Order>> GetOrdersByUserIdAsync(int userId);
         Task<Order> GetByIdAsync(int orderId);
+        Task<OrderDto> GetOrderDtoByIdAsync(int orderId);
+
     }
 }

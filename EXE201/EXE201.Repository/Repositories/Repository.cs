@@ -79,5 +79,10 @@ namespace EXE201.Repository.Repositories
             await _db.SaveChangesAsync();
             return entity;
         }
+        public async Task<T> GetByIdAsync(int id)
+        {
+            return await dbSet.FindAsync(id);
+        }
+
     }
 }
