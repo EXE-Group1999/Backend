@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EXE201.Data.Entities
 {
-    [Table("Furniture")]
     public class Furniture
     {
         [Key]
