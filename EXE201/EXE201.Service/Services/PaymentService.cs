@@ -52,8 +52,8 @@ namespace EXE201.Service.Services
                 amount: (int)order.TotalAmount,
                 description: $"Payment for Order #{order.Id}",
                 items: items,
-                cancelUrl: "https://yourdomain.com/payment/cancel",
-                returnUrl: "https://yourdomain.com/payment/success"
+                cancelUrl: $"https://deconest.vercel.app/checkout?status=cancel&orderId={order.Id}",
+                returnUrl: $"https://deconest.vercel.app/checkout?status=success&orderId={order.Id}"
             );
 
             var result = await _payOS.createPaymentLink(paymentData);
